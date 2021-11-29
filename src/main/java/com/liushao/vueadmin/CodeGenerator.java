@@ -1,4 +1,4 @@
-package com.liushao;
+package com.liushao.vueadmin;
 
 import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;

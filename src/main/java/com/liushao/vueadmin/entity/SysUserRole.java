@@ -1,7 +1,6 @@
 package com.liushao.vueadmin.entity;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * <p>
@@ -12,7 +11,6 @@ import lombok.EqualsAndHashCode;
  * @since 2021-11-29
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 public class SysUserRole {
 
     private static final long serialVersionUID = 1L;
