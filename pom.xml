@@ -11,8 +11,8 @@
 	<groupId>com.liushao</groupId>
 	<artifactId>vueadmin</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>vueadmin</name>
-	<description>Demo project for Spring Boot</description>
+	<name>authority_management_frontend</name>
+	<description>authority_management_frontend</description>
 	<properties>
 		<java.version>11</java.version>
 	</properties>
