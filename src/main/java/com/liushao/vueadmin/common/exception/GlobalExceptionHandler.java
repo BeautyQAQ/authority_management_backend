@@ -1,47 +1,56 @@
 package com.liushao.vueadmin.common.exception;
 
-import lombok.extern.slf4j.Slf4j;
-
 import com.liushao.vueadmin.common.lang.Result;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+  @ExceptionHandler(ApiException.class)
+  ResponseEntity<Result> api(ApiException e) {
+    return error(e.status(), e.getMessage());
+  }
 
-	//
+  @ExceptionHandler(AccessDeniedException.class)
+  ResponseEntity<Result> denied() {
+    return error(403, "没有操作权限");
+  }
 
-	// 实体校验异常捕获
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(value = MethodArgumentNotValidException.class)
-	public Result handler(MethodArgumentNotValidException e) {
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  ResponseEntity<Result> invalid(MethodArgumentNotValidException e) {
+    return error(400, e.getBindingResult().getAllErrors().getFirst().getDefaultMessage());
+  }
 
-		BindingResult result = e.getBindingResult();
-		ObjectError objectError = result.getAllErrors().stream().findFirst().get();
+  @ExceptionHandler({
+    IllegalArgumentException.class,
+    HttpMessageNotReadableException.class,
+    MethodArgumentTypeMismatchException.class,
+    MissingServletRequestParameterException.class
+  })
+  ResponseEntity<Result> badRequest() {
+    return error(400, "请求参数不正确");
+  }
 
-		log.error("实体校验异常：----------------{}", objectError.getDefaultMessage());
-		return Result.fail(objectError.getDefaultMessage());
-	}
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  ResponseEntity<Result> conflict() {
+    return error(409, "名称或编码已存在，或记录仍有关联数据");
+  }
 
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(value = IllegalArgumentException.class)
-	public Result handler(IllegalArgumentException e) {
-		log.error("Assert异常：----------------{}", e.getMessage());
-		return Result.fail(e.getMessage());
-	}
+  @ExceptionHandler(Exception.class)
+  ResponseEntity<Result> unexpected(Exception e) {
+    log.error("Request failed", e);
+    return error(500, "服务暂时不可用，请稍后重试");
+  }
 
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(value = RuntimeException.class)
-	public Result handler(RuntimeException e) {
-		log.error("运行时异常：----------------{}", e.getMessage());
-		return Result.fail(e.getMessage());
-	}
-
+  private ResponseEntity<Result> error(int code, String message) {
+    return ResponseEntity.status(code).body(Result.fail(code, message, null));
+  }
 }

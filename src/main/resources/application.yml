@@ -14,14 +14,16 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
       password: ${REDIS_PASSWORD:}
-  security:
-    user:
-      name: ${ADMIN_USERNAME:user}
-      password: ${ADMIN_PASSWORD}
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**Mapper.xml
 liushao:
   jwt:
     secret: ${JWT_SECRET}
     expire: ${JWT_EXPIRE_SECONDS:86400}
+app:
+  bootstrap:
+    enabled: ${BOOTSTRAP_ADMIN:false}
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:}

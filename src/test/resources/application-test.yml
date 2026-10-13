@@ -10,3 +10,7 @@ spring:
 liushao:
   jwt:
     secret: test-only-secret-abcdefghijklmnopqrstuvwxyz-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ
+
+app:
+  bootstrap:
+    enabled: false

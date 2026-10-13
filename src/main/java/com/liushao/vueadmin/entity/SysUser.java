@@ -5,10 +5,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * <p>
- * 
- * </p>
- *
  * @author huangshen
  * @since 2021-11-29
  */
@@ -16,19 +12,17 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class SysUser extends BaseEntity {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    private String username;
+  private String username;
 
-    private String password;
+  @com.fasterxml.jackson.annotation.JsonIgnore private String password;
 
-    private String avatar;
+  private String avatar;
 
-    private String email;
+  private String email;
 
-    private String city;
+  private String city;
 
-    private LocalDateTime lastLogin;
-
-
+  private LocalDateTime lastLogin;
 }
