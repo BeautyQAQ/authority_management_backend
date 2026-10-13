@@ -3,7 +3,7 @@ package com.liushao.vueadmin.service.impl;
 import com.liushao.vueadmin.entity.SysRoleMenu;
 import com.liushao.vueadmin.mapper.SysRoleMenuMapper;
 import com.liushao.vueadmin.service.SysRoleMenuService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**

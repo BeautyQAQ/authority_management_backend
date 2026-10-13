@@ -1,17 +1,27 @@
 server:
-  port: 8081
-# DataSource Config
+  port: ${SERVER_PORT:8081}
 spring:
+  config:
+    import: optional:file:.env.local[.properties]
+  application:
+    name: authority_management_backend
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://121.196.168.101:3306/vueadmin?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
-
+    url: ${DB_URL:jdbc:mysql://localhost:3306/vueadmin?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   security:
     user:
-      name: user
-      password: 111111
-
+      name: ${ADMIN_USERNAME:user}
+      password: ${ADMIN_PASSWORD}
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**Mapper.xml
+liushao:
+  jwt:
+    secret: ${JWT_SECRET}
+    expire: ${JWT_EXPIRE_SECONDS:86400}

@@ -1,7 +1,7 @@
 package com.liushao.vueadmin.service;
 
 import com.liushao.vueadmin.entity.SysUser;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 
 /**
  * <p>
