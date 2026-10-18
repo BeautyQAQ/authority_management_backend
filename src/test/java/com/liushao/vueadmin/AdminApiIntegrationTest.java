@@ -14,6 +14,8 @@ import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class AdminApiIntegrationTest {
   @Autowired MockMvc mvc;
+  @Autowired TestRedisHealthIndicator redisHealth;
   @Autowired JdbcTemplate db;
   @Autowired ObjectMapper json;
   @Autowired PasswordEncoder passwords;
@@ -40,6 +43,7 @@ class AdminApiIntegrationTest {
 
   @BeforeEach
   void setup() {
+    redisHealth.current = Health.up().build();
     db.update(
         "INSERT INTO sys_user(id,username,password,statu) VALUES(1,'admin',?,1)",
         passwords.encode("Admin-test-123"));
@@ -130,6 +134,33 @@ class AdminApiIntegrationTest {
         1,
         "statu",
         1);
+  }
+
+
+  @Test
+  void healthProbesArePublicAndDoNotRevealInfrastructure() throws Exception {
+    for (String endpoint : List.of("/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness")) {
+      mvc.perform(get(endpoint))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.status").value("UP"))
+          .andExpect(jsonPath("$.components").doesNotExist())
+          .andExpect(jsonPath("$.details").doesNotExist());
+    }
+    mvc.perform(get("/actuator/env").header("Authorization", admin)).andExpect(status().isNotFound());
+    mvc.perform(get("/actuator/configprops").header("Authorization", admin)).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void readinessFailsWhenRedisIsDownButLivenessStaysUp() throws Exception {
+    redisHealth.current = Health.down().withDetail("private-host", "should-not-be-published").build();
+    mvc.perform(get("/actuator/health/readiness"))
+        .andExpect(status().isServiceUnavailable())
+        .andExpect(jsonPath("$.status").value("DOWN"))
+        .andExpect(jsonPath("$.components").doesNotExist())
+        .andExpect(jsonPath("$.details").doesNotExist());
+    mvc.perform(get("/actuator/health/liveness"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("UP"));
   }
 
   @Test
@@ -265,6 +296,34 @@ class AdminApiIntegrationTest {
   }
 
   @Test
+  void communityPermissionsCanBeGrantedWithoutChangingProtectedMenus() throws Exception {
+    long listId = db.queryForObject("SELECT id FROM sys_menu WHERE perms='community:user:list'", Long.class);
+    long statusId = db.queryForObject("SELECT id FROM sys_menu WHERE perms='community:user:status'", Long.class);
+    long uid = created("/sys/user/save", user("community_operator"));
+    long rid = created("/sys/role/save", role("community_operator"));
+    postJson("/sys/role/perm/" + rid, admin, List.of(listId)).andExpect(status().isOk());
+    postJson("/sys/user/role/" + uid, admin, List.of(rid)).andExpect(status().isOk());
+    String reader = token("community_operator");
+    mvc.perform(get("/sys/menu/nav").header("Authorization", reader))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.nav[0].title").value("社区运营"))
+        .andExpect(jsonPath("$.data.nav[0].children[0].component").value("community/Users"))
+        .andExpect(jsonPath("$.data.authoritys", org.hamcrest.Matchers.hasItem("community:user:list")));
+    mvc.perform(put("/community/users/7/status").header("Authorization", reader)
+        .contentType("application/json").content("{\"status\":false,\"reason\":\"违规\"}"))
+        .andExpect(status().isForbidden());
+    postJson("/sys/role/perm/" + rid, admin, List.of(statusId)).andExpect(status().isOk());
+    mvc.perform(get("/sys/menu/nav").header("Authorization", reader))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.authoritys", org.hamcrest.Matchers.hasItem("community:user:status")))
+        .andExpect(jsonPath("$.data.authoritys", org.hamcrest.Matchers.hasItem("community:user:list")));
+    postJson("/sys/menu/delete/" + statusId, admin, Map.of()).andExpect(status().isForbidden());
+    var edit = new HashMap<>(menu("renamed_builtin", 0));
+    edit.put("id", statusId);
+    postJson("/sys/menu/update", admin, edit).andExpect(status().isForbidden());
+  }
+
+  @Test
   void validatesMenuCyclesAndDeletesChildrenFirst() throws Exception {
     long parent = created("/sys/menu/save", menu("parent", 0));
     long child = created("/sys/menu/save", menu("child", parent));
@@ -328,5 +387,21 @@ class AdminApiIntegrationTest {
         .andExpect(status().isBadRequest());
     postJson("/sys/user/save", admin, Map.of("username", "short", "password", "short", "statu", 1))
         .andExpect(status().isBadRequest());
+  }
+  @org.springframework.boot.test.context.TestConfiguration(proxyBeanMethods = false)
+  static class HealthTestConfiguration {
+    @org.springframework.context.annotation.Bean
+    TestRedisHealthIndicator redisHealthIndicator() {
+      return new TestRedisHealthIndicator();
+    }
+  }
+
+  static class TestRedisHealthIndicator implements HealthIndicator {
+    Health current = Health.up().build();
+
+    @Override
+    public Health health() {
+      return current;
+    }
   }
 }

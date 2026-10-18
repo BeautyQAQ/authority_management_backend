@@ -6,6 +6,7 @@ import com.liushao.vueadmin.security.*;
 import com.liushao.vueadmin.service.AdminService;
 import com.liushao.vueadmin.utils.JwtUtil;
 import org.springframework.context.annotation.*;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -42,7 +43,9 @@ public class SecurityConfig {
         .requestCache(cache -> cache.disable())
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/captcha", "/login", "/error")
+                auth.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**")
+                    .permitAll()
+                    .requestMatchers("/captcha", "/login", "/error")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

@@ -1,21 +1,25 @@
 server:
   port: ${SERVER_PORT:8081}
 spring:
-  config:
-    import: optional:file:.env.local[.properties]
+  profiles:
+    default: local
   application:
     name: authority_management_backend
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://localhost:3306/vueadmin?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/vueadmin?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
+    hikari:
+      data-source-properties:
+        forceConnectionTimeZoneToSession: true
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
       password: ${REDIS_PASSWORD:}
+      timeout: 3s
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**Mapper.xml
 liushao:
@@ -23,7 +27,35 @@ liushao:
     secret: ${JWT_SECRET}
     expire: ${JWT_EXPIRE_SECONDS:86400}
 app:
+  community:
+    api-url: ${COMMUNITY_API_URL:http://localhost:8080}
+    admin-key: ${COMMUNITY_ADMIN_KEY:}
   bootstrap:
     enabled: ${BOOTSTRAP_ADMIN:false}
     username: ${ADMIN_USERNAME:admin}
     password: ${ADMIN_PASSWORD:}
+
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health
+      discovery:
+        enabled: false
+    jmx:
+      exposure:
+        exclude: '*'
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,redis

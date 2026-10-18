@@ -353,10 +353,10 @@ public class AdminService {
     }
     if (menu.type() == 1
         && (menu.component() == null
-            || !Set.of("sys/User", "sys/Role", "sys/Menu").contains(menu.component())
+            || !Set.of("sys/User", "sys/Role", "sys/Menu", "community/Users", "community/Posts", "community/Comments", "community/Billboards", "community/Tips", "community/Promotions", "community/Tags", "community/Audit").contains(menu.component())
             || menu.path() == null
-            || !menu.path().startsWith("/sys/")))
-      throw new ApiException(400, "请选择已实现的管理页面和 /sys/ 路径");
+            || !(menu.path().startsWith("/sys/") || menu.path().startsWith("/community/"))))
+      throw new ApiException(400, "请选择已实现的管理页面和 /sys/ 或 /community/ 路径");
     if (menu.type() == 2 && menu.parentId() == 0) throw new ApiException(400, "按钮必须属于菜单");
     if (update) {
       if (menu.type() == 2
@@ -394,8 +394,8 @@ public class AdminService {
   }
 
   private void editableMenu(long id) {
-    menu(id);
-    if (id <= 16) throw new ApiException(403, "内置权限菜单不可修改");
+    var existing = menu(id);
+    if (id <= 16 || Boolean.TRUE.equals(existing.get("builtin"))) throw new ApiException(403, "内置权限菜单不可修改");
   }
 
   @Transactional

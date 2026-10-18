@@ -37,3 +37,7 @@ build/
 
 # Python development smoke checks
 __pycache__/
+
+# Local environment files (only examples are committed)
+.env.*
+!.env.example

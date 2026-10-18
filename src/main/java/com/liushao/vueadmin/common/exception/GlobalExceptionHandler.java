@@ -6,10 +6,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -42,6 +45,16 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(DataIntegrityViolationException.class)
   ResponseEntity<Result> conflict() {
     return error(409, "名称或编码已存在，或记录仍有关联数据");
+  }
+
+  @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+  ResponseEntity<Result> notFound() {
+    return error(404, "请求的资源不存在");
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  ResponseEntity<Result> methodNotAllowed() {
+    return error(405, "请求方法不支持");
   }
 
   @ExceptionHandler(Exception.class)
