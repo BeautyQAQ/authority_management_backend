@@ -12,7 +12,7 @@ JDK 21 + Spring Boot 3.5.16 + Spring Security + JDBC/MyBatis Plus + Flyway + Red
 
 ## 首次启动
 
-准备独立的空 MySQL 8 数据库和 Redis 6.2+，然后：
+准备与社区后端共用的 MySQL 8 数据库 `liushao_community` 和 Redis 6.2+，然后：
 
 ```bash
 cp .env.example .env.local
@@ -26,7 +26,7 @@ cp .env.example .env.local
 - `JWT_SECRET` 至少 64 字节，可用 `openssl rand -hex 64` 生成。
 - `ADMIN_PASSWORD` 至少 8 个字符，最多 72 个 UTF-8 字节。启动时仅在用户表为空且 `BOOTSTRAP_ADMIN=true` 时创建 ID 1 管理员，密码以 BCrypt 保存。它是业务登录账号。
 - 初始化成功后设置 `BOOTSTRAP_ADMIN=false`。修改环境中的密码不会重置已有账号；使用个人中心改密。
-- Flyway 自动执行 `src/main/resources/db/migration` 中的版本迁移，建立表、内置管理员角色、系统管理和社区运营菜单/权限。不要再导入旧 `vueadmin.sql`；它仅作历史参考。已有旧表的数据库需另行迁移，不应直接开启 baseline 或清空数据。
+- Flyway 自动执行 `src/main/resources/db/migration` 中的版本迁移，建立表、内置管理员角色、系统管理和社区运营菜单/权限。管理端历史表为 `flyway_admin_schema_history`，社区端保留 `flyway_schema_history`。两端共用数据库、分别校验和升级自己的迁移。新环境允许从版本 0 建立历史，以便社区先建表时仍执行管理端 V1。不要再导入旧 `vueadmin.sql`；已有数据库需迁移真实历史，不能跳过 V1 或清空数据。旧库合并步骤见 [数据库合并记录](docs/database-consolidation.md)。
 - 内置管理员、管理员角色及内置权限定义受保护，管理员自身通过个人中心改密。新用户需显式设置密码并分配角色。
 - NAS 本地配置保存在被 Git 忽略、权限为 0600 的 `.env.local`。密码不写入文档或代码。
 
@@ -65,7 +65,7 @@ python3 scripts/smoke_live.py http://127.0.0.1:8081
 
 脚本只用于独立开发库：读取本地配置中的管理员凭据和 Redis 验证码，验证实际 HTTP/MySQL/Redis 行为，创建唯一命名的用户/角色/菜单并在 finally 中清理。改过管理员密码后，请通过环境变量 `ADMIN_PASSWORD` 提供当前密码。脚本不会输出密码或 token。
 
-2026-10-13 已在 NAS `vueadmin` + Redis DB 12 验证登录、验证码 TTL/一次性消费、CRUD、授权/撤权、401/403、改密撤销会话与退出。社区库不参与这些测试。
+2026-10-13 已在 NAS `vueadmin` + Redis DB 12 验证登录、验证码 TTL/一次性消费、CRUD、授权/撤权、401/403、改密撤销会话与退出。2026-10-28 管理表及迁移历史整体移入 `liushao_community`，Redis 继续使用 DB 12。
 
 
 ## 容器与生产配置
@@ -99,7 +99,7 @@ Docker 每 30 秒检查 readiness，启动宽限期 90 秒。普通 `./mvnw veri
 
 ## 社区运营后台
 
-管理账号 `sys_user` 与社区注册账号 `ums_user` 是两个独立账号体系。新增的「社区运营」目录管理社区账号、帖子审核/下架/置顶/精华、评论可见性与删除、公告、提示语、推广链接、标签和操作审计。后台不会直接连接社区数据库。
+管理账号 `sys_user` 与社区注册账号 `ums_user` 是两个独立账号体系，表均位于 `liushao_community`。新增的「社区运营」目录管理社区账号、帖子审核/下架/置顶/精华、评论可见性与删除、公告、提示语、推广链接、标签和操作审计。社区业务操作继续通过社区后端 API 执行授权、事务和审计逻辑。
 
 服务端配置 `COMMUNITY_API_URL`（默认 `http://localhost:8080`）及与社区后端一致的 `COMMUNITY_ADMIN_KEY`；空密钥关闭运营连接并返回 503。密钥仅由管理后端发送，不能配置为前端 Vite 变量。代理仅允许预定义的 `/community/users|posts|comments|billboards|tips|promotions|tags|audit` 路由和 HTTP 方法，调用社区 `/internal/admin/**`。操作者来自当前后台登录身份，用户名使用 UTF-8 URL 编码传入 `X-Community-Admin-Actor`，社区后端解码后记录审计。
 
@@ -108,3 +108,7 @@ Flyway V2 新增独立菜单和逐操作的 `community:*` 权限，并标记内�
 列表查询使用 `pageNo`（从 1 起）、`size`（1–50）与 `query`，帖子支持 `status=PUBLISHED|PENDING|HIDDEN`，评论支持 `postId`。社区分页数据保留 `{content,totalElements,totalPages,number,size}`，代理将外层 `message` 转为管理端 `msg`。400/404/409 等业务状态原样保留，社区内部认证失败映射 502，避免让后台用户被错误退出；连接失败返回 503，远端异常详情不暴露给浏览器。
 
 新增测试覆盖固定路由、查询编码、中文操作者、密钥隔离、错误状态/重定向、逐操作 RBAC、输入约束，以及内置社区权限可授予但不可编辑。测试仅使用 H2、模拟认证和临时本机 HTTP 服务。
+
+## 工作区资料
+
+数据库合并 SQL 位于 `scripts/sql/`；共享部署、维护与恢复入口见 [社区后端部署目录](../liushao_community_backend/deploy/README.md)，当前 NAS 连接约定见 [基础设施说明](../liushao_community_backend/docs/INFRASTRUCTURE.md)。

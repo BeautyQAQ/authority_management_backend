@@ -41,3 +41,7 @@ __pycache__/
 # Local environment files (only examples are committed)
 .env.*
 !.env.example
+
+# Private migration backups
+.local/
+.artifacts/

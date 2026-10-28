@@ -5,9 +5,14 @@ spring:
     default: local
   application:
     name: authority_management_backend
+  flyway:
+    table: flyway_admin_schema_history
+    # The community app may initialize the shared schema first. Version 0 still runs V1.
+    baseline-on-migrate: true
+    baseline-version: 0
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://localhost:3306/vueadmin?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/liushao_community?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     hikari:

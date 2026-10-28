@@ -1,0 +1,100 @@
+{
+  "verifiedAt": "2026-10-28T04:44:53.489375+00:00",
+  "connection": "nas-mysql",
+  "mysqlVersion": "8.1.0",
+  "sourceDatabase": "vueadmin",
+  "targetDatabase": "liushao_community",
+  "method": "Single atomic RENAME TABLE via DBX",
+  "tablesMoved": 6,
+  "sourceTablesRemaining": 0,
+  "targetTables": 14,
+  "flywayHistoryTables": {
+    "admin": "flyway_admin_schema_history",
+    "community": "flyway_schema_history"
+  },
+  "nasFlywayAppliedVersions": {
+    "admin": "1",
+    "community": "1"
+  },
+  "nasPendingMigrationsUnchanged": true,
+  "verification": {
+    "rowCounts": "equal",
+    "tableChecksums": "equal",
+    "autoIncrementValues": "equal",
+    "columnDefinitions": 104,
+    "indexEntries": 38,
+    "foreignKeys": 7,
+    "checkConstraints": 4,
+    "orphanAdminRelations": 0,
+    "remainingVueadminForeignKeyReferences": 0,
+    "nasJdbcReadsAndFlywayValidation": "passed",
+    "sharedInitializationAdminFirst": "passed",
+    "sharedInitializationCommunityFirst": "passed"
+  },
+  "tests": {
+    "admin": {
+      "passed": 37
+    },
+    "community": {
+      "passed": 68,
+      "skipped": 1
+    },
+    "backupBundle": {
+      "passed": 27
+    },
+    "composeConfig": "passed",
+    "scriptSyntax": "passed",
+    "dockerBackupRestore": {
+      "passed": true,
+      "cleanupVerified": true,
+      "durationSeconds": 741.24,
+      "checks": [
+        {
+          "name": "real_source_data_and_images",
+          "status": "passed"
+        },
+        {
+          "name": "coordinated_snapshot_and_source_resumed",
+          "status": "passed"
+        },
+        {
+          "name": "corrupt_bundle_rejected_before_provisioning",
+          "status": "passed"
+        },
+        {
+          "name": "fresh_credentials_and_both_flyway_histories",
+          "status": "passed"
+        },
+        {
+          "name": "unicode_images_social_data_ownership_and_session_revocation",
+          "status": "passed"
+        },
+        {
+          "name": "uid_10001_upload_write_shared_database_and_restricted_accounts",
+          "status": "passed"
+        },
+        {
+          "name": "enabled_database_event_restored_but_never_executed",
+          "status": "passed"
+        },
+        {
+          "name": "existing_target_rejected_without_modification",
+          "status": "passed"
+        },
+        {
+          "name": "missing_upload_rejected_without_bundle_and_source_resumed",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "backup": {
+    "path": ".local/backups/database-consolidation/20261028T040928Z/before.sql.gz",
+    "sha256": "aebc6308cc0e15e997802867cb32ef79c82e37faae3e51c184ace84caa136076"
+  },
+  "privateSnapshots": {
+    "before": ".local/backups/database-consolidation/20261028T040928Z/before-metadata.json",
+    "after": ".local/backups/database-consolidation/20261028T040928Z/after-metadata.json"
+  },
+  "localPathsRelativeTo": "authority_management_backend"
+}
