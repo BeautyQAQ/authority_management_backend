@@ -10,7 +10,8 @@ public final class CommunityRequests {
   private CommunityRequests() {}
   public record UserStatus(@NotNull Boolean status, @NotBlank @Size(max = 255) String reason) {}
   public record Moderation(@NotBlank @Pattern(regexp = "PUBLISHED|PENDING|HIDDEN") String status,
-      @NotNull Boolean top, @NotNull Boolean essence, @NotBlank @Size(max = 255) String reason) {}
+      @NotNull Boolean top, @NotNull Boolean essence, @NotBlank @Size(max = 255) String reason,
+      @NotNull @Min(0) Long version) {}
   public record Visibility(@NotNull Boolean visible, @NotBlank @Size(max = 255) String reason) {}
 
   public static JsonNode catalog(String resource, JsonNode body) {

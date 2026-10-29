@@ -8,7 +8,7 @@ JDK 21 + Spring Boot 3.5.16 + Spring Security + JDBC/MyBatis Plus + Flyway + Red
 ./mvnw verify
 ```
 
-包装脚本默认使用 `/opt/java/jdk21`，可用 `JAVA_HOME` 覆盖。首次下载并校验 Maven 3.9.11。37 项测试覆盖 JWT、应用上下文、系统管理与社区权限、服务端代理、健康探针和生产配置校验，使用 H2、内存认证状态/健康替身及临时本机 HTTP 服务，不连接 NAS。
+包装脚本默认使用 `/opt/java/jdk21`，可用 `JAVA_HOME` 覆盖。首次下载并校验 Maven 3.9.11。38 项测试覆盖 JWT、应用上下文、系统管理与社区权限、服务端代理、健康探针和生产配置校验，使用 H2、内存认证状态/健康替身及临时本机 HTTP 服务，不连接 NAS。
 
 ## 首次启动
 
@@ -103,7 +103,7 @@ Docker 每 30 秒检查 readiness，启动宽限期 90 秒。普通 `./mvnw veri
 
 服务端配置 `COMMUNITY_API_URL`（默认 `http://localhost:8080`）及与社区后端一致的 `COMMUNITY_ADMIN_KEY`；空密钥关闭运营连接并返回 503。密钥仅由管理后端发送，不能配置为前端 Vite 变量。代理仅允许预定义的 `/community/users|posts|comments|billboards|tips|promotions|tags|audit` 路由和 HTTP 方法，调用社区 `/internal/admin/**`。操作者来自当前后台登录身份，用户名使用 UTF-8 URL 编码传入 `X-Community-Admin-Actor`，社区后端解码后记录审计。
 
-Flyway V2 新增独立菜单和逐操作的 `community:*` 权限，并标记内置菜单为不可修改。管理员自动具备新权限；为运营人员分配菜单/操作权限时正常执行现有权限范围检查，内置保护不影响角色授权。只读、审核、删除及各内容资源的新增/编辑/删除权限分别控制。用户状态、审核与删除需要填写原因；操作记录只能查询。V1 保持不变。
+Flyway V2 新增独立菜单和逐操作的 `community:*` 权限，并标记内置菜单为不可修改。管理员自动具备新权限；为运营人员分配菜单/操作权限时正常执行现有权限范围检查，内置保护不影响角色授权。只读、审核、删除及各内容资源的新增/编辑/删除权限分别控制。用户状态、审核与删除需要填写原因；帖子审核还必须传入详情中的 `version`，过期版本返回 409。新帖及已发布文章修改后均待审核。操作记录只能查询。V1 保持不变。
 
 列表查询使用 `pageNo`（从 1 起）、`size`（1–50）与 `query`，帖子支持 `status=PUBLISHED|PENDING|HIDDEN`，评论支持 `postId`。社区分页数据保留 `{content,totalElements,totalPages,number,size}`，代理将外层 `message` 转为管理端 `msg`。400/404/409 等业务状态原样保留，社区内部认证失败映射 502，避免让后台用户被错误退出；连接失败返回 503，远端异常详情不暴露给浏览器。
 

@@ -73,6 +73,23 @@ class CommunityAdminControllerTest {
         .contentType("application/json").content("{\"name\":\"java\"}"))
         .andExpect(status().isConflict()).andExpect(jsonPath("$.msg").value("标签已存在"));
   }
+  @Test void moderationRequiresAndForwardsTheReviewedVersion() throws Exception {
+    for (String version : new String[] {"", ",\"version\":null", ",\"version\":-1"}) {
+      mvc.perform(put("/community/posts/7/moderation").with(operator("community:post:moderate"))
+          .contentType("application/json")
+          .content("{\"status\":\"PUBLISHED\",\"top\":false,\"essence\":false,\"reason\":\"审核通过\"" + version + "}"))
+          .andExpect(status().isBadRequest());
+    }
+    verifyNoInteractions(bridge);
+    when(bridge.forward(eq(HttpMethod.PUT),eq("posts/7/moderation"),eq(Map.of()),any(),eq("operator")))
+        .thenReturn(ResponseEntity.status(409).body(Result.fail(409,"帖子已被修改",null)));
+    mvc.perform(put("/community/posts/7/moderation").with(operator("community:post:moderate"))
+        .contentType("application/json")
+        .content("{\"status\":\"PUBLISHED\",\"top\":false,\"essence\":false,\"reason\":\"审核通过\",\"version\":2}"))
+        .andExpect(status().isConflict());
+    verify(bridge).forward(HttpMethod.PUT,"posts/7/moderation",Map.of(),
+        new CommunityRequests.Moderation("PUBLISHED",false,false,"审核通过",2L),"operator");
+  }
   @Test void unsupportedRoutesNeverBecomeAnArbitraryProxy() throws Exception {
     mvc.perform(get("/community/actuator/env").with(operator("community:user:list"))).andExpect(status().isNotFound());
     mvc.perform(post("/community/users").with(operator("community:user:status"))).andExpect(status().isMethodNotAllowed());
