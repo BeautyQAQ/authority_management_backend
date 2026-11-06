@@ -1,4 +1,4 @@
-# 流沙社区管理后端
+# 六少社区管理后端
 
 JDK 21 + Spring Boot 3.5.16 + Spring Security + JDBC/MyBatis Plus + Flyway + Redis。
 
